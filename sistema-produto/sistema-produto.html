@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Produtos - JS Puro</title>
+    <script src="https://cdn.tailwindcss.com"></script> 
+</head>
+<body class="bg-gray-100 font-sans min-h-screen p-4 md:p-8 text-gray-800">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Cabeçalho -->
+        <header class="bg-indigo-600 text-white p-6 rounded-xl shadow-md">
+            <h1 class="text-2xl md:text-3xl font-bold">Gerenciador de Produtos</h1>
+            <p class="text-indigo-200 text-sm mt-1">Controle de cadastro, entradas, saídas e registro de horários</p>
+        </header>
+
+        <!-- Grade de Operações -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Formulários (Esquerda) -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- Painel 1: Cadastrar Novo Produto -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2"> Cadastrar Novo Produto</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase">Nome do Produto</label>
+                            <input id="prodNome" type="text" placeholder="Ex: Monitor Gamer" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase">Preço Un. ($)</label>
+                            <input id="prodPreco" type="number" step="0.01" placeholder="0.00" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <button onclick="interfaceCadastrar()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition-all shadow">
+                            Cadastrar Produto
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Painel 2: Movimentação (Entrada / Saída) -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Registrar Entrada / Saída</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase">Selecionar Produto</label>
+                            <select id="movId" class="w-full px-3 py-2 border rounded-lg outline-none bg-white focus:ring-2 focus:ring-indigo-500">
+                                <option value="">-- Escolha um produto --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase">Quantidade</label>
+                            <input id="movQtd" type="number" placeholder="Quantidade" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="interfaceMovimentar('ENTRADA')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg transition-all shadow">
+                                 Entrada
+                            </button>
+                            <button onclick="interfaceMovimentar('SAIDA')" class="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 rounded-lg transition-all shadow">
+                                 Saída
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Listas e Histórico (Direita) -->
+            <div class="lg:col-span-8 space-y-6">
+                <!-- Lista de Produtos Cadastrados -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Inventário e Lista de Produtos</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider border-b">
+                                    <th class="py-3 px-4">ID</th>
+                                    <th class="py-3 px-4">Produto</th>
+                                    <th class="py-3 px-4">Preço</th>
+                                    <th class="py-3 px-4 text-center">Estoque Atual</th>
+                                    <th class="py-3 px-4 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaProdutos" class="divide-y divide-gray-100 text-sm">
+                                <!-- Inserção via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Histórico de Transações com Horários -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2"> Histórico Registrado com Horários</h2>
+                    <div class="max-h-60 overflow-y-auto space-y-2" id="listaHistorico">
+                        <!-- Inserção via JS -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- NÚCLEO DO SISTEMA EM JAVASCRIPT PURO -->
+    <script>
+        "use strict";
+
+        // ==========================================
+        // 1. ESTADO DO SISTEMA (Banco de Dados Local)
+        // ==========================================
+        let bancoDeDados = JSON.parse(localStorage.getItem('sistema_produtos')) || {
+            produtos: [],
+            historico: [],
+            proximoId: 1
+        };
+
+        // Salva os dados no LocalStorage
+        function salvarEstado() {
+            localStorage.setItem('sistema_produtos', JSON.stringify(bancoDeDados));
+        }
+
+        // Retorna a data e o horário atual formatado no padrão (DD/MM/AAAA - HH:MM:SS)
+        function obterHorarioAtual() {
+            const agora = new Date();
+            return agora.toLocaleString('pt-BR');
+        }
+
+        // ==========================================
+        // 2. FUNÇÕES DE VALIDAÇÃO (Regras de Negócio)
+        // ==========================================
+        const Validacao = {
+            textoVazio: (texto) => !texto || texto.trim() === "",
+            numeroInvalido: (num) => isNaN(num) || num <= 0,
+            produtoExiste: (id) => bancoDeDados.produtos.some(p => p.id === id),
+            estoqueInsuficiente: (id, qtdSubtrair) => {
+                const produto = bancoDeDados.produtos.find(p => p.id === id);
+                return produto ? produto.estoque < qtdSubtrair : true;
+            }
+        };
+
+        // ==========================================
+        // 3. FUNÇÕES DO SISTEMA (Gerenciamento)
+        // ==========================================
+
+        // CADASTRAR: Adiciona um produto totalmente novo ao sistema
+        function cadastrarProduto(nome, preco) {
+            if (Validacao.textoVazio(nome)) return alert("Erro: O nome do produto não pode ficar em branco.");
+            if (Validacao.numeroInvalido(preco)) return alert("Erro: O preço digitado deve ser maior que zero.");
+
+            const novoProduto = {
+                id: bancoDeDados.proximoId++,
+                nome: nome.trim(),
+                preco: parseFloat(preco),
+                estoque: 0 // Inicia zerado, incrementos são feitos via Entrada
+            };
+
+            bancoDeDados.produtos.push(novoProduto);
+            registrarLog(`PRODUTO CADASTRADO: "${novoProduto.nome}" (ID: ${novoProduto.id}) com valor de $${novoProduto.preco.toFixed(2)}`);
+            
+            salvarEstado();
+            atualizarInterface();
+        }
+
+        // ADICIONAR / REMOVER ESTOQUE (Entradas e Saídas)
+        function movimentarEstoque(id, quantidade, tipo) {
+            const idInt = parseInt(id);
+            const qtdInt = parseInt(quantidade);
+
+            if (Validacao.numeroInvalido(idInt) || !Validacao.produtoExiste(idInt)) return alert("Erro: Selecione um produto válido.");
+            if (Validacao.numeroInvalido(qtdInt)) return alert("Erro: A quantidade deve ser um número inteiro positivo.");
+
+            const produto = bancoDeDados.produtos.find(p => p.id === idInt);
+
+            if (tipo === "ENTRADA") {
+                produto.estoque += qtdInt;
+                registrarLog(`ENTRADA: Adicionado +${qtdInt} unidade(s) de "${produto.nome}"`);
+            } else if (tipo === "SAIDA") {
+                if (Validacao.estoqueInsuficiente(idInt, qtdInt)) {
+                    return alert(`Erro: Estoque insuficiente de "${produto.nome}". Estoque atual: ${produto.estoque}`);
+                }
+                produto.estoque -= qtdInt;
+                registrarLog(`SAÍDA: Removido -${qtdInt} unidade(s) de "${produto.nome}"`);
+            }
+
+            salvarEstado();
+            atualizarInterface();
+        }
+
+        // DELETAR: Elimina o produto do sistema de forma permanente
+        function excluirProduto(id) {
+            const idInt = parseInt(id);
+            const produto = bancoDeDados.produtos.find(p => p.id === idInt);
+            
+            if (!produto) return;
+
+            if (confirm(`Deseja realmente remover o produto "${produto.nome}" permanentemente do inventário?`)) {
+                bancoDeDados.produtos = bancoDeDados.produtos.filter(p => p.id !== idInt);
+                registrarLog(`EXCLUSÃO: O produto "${produto.nome}" (ID: ${idInt}) foi removido do sistema.`);
+                salvarEstado();
+                atualizarInterface();
+            }
+
+        }
+        // REGISTRAR: Armazena o evento ocorrido junto com o carimbo de data e hora
+        function registrarLog(descricao) {
+            const novoLog = {
+                horario: obterHorarioAtual(),
+                descricao: descricao
+            };
+            // Coloca os registros mais recentes no topo
+            bancoDeDados.historico.unshift(novoLog);
+        }
+
+        // ==========================================
+        // 4. FUNÇÕES DE INTERFACE (Renderização / DOM)
+        // ==========================================
+
+        // Gatilho para o botão de cadastro
+        function interfaceCadastrar() {
+            const nomeInput = document.getElementById("prodNome");
+            const precoInput = document.getElementById("prodPreco");
+            cadastrarProduto(nomeInput.value, precoInput.value);
+
+            //limpa os campos após enviar 
+            nomeInput.value ="";
+            precoInput.value="";
+        }
+        // Gatilho para os botões de movimentação de estoque
+        function interfaceMovimentar(tipo) {
+            const selectId = document.getElementById("movId");
+            const qtdInput = document.getElementById("movQtd");
+            movimentarEstoque(selectId.value, qtdInput.value, tipo);
+            qtdInput.value = ""; // Reseta campo quantitativo
+        }
+
+        // Renderiza a lista de produtos, menus seletores e histórico na tela
+        function atualizarInterface() {
+            const tabela = document.getElementById("tabelaProdutos");
+            const seletor = document.getElementById("movId");
+            const historicoContainer = document.getElementById("listaHistorico");
+        
+        // Limpeza inicial dos containers 
+        tabela.innerHTML = "";
+        seletor.innerHTML = '-- Escolha um produto --';
+        historicoContainer.innerHTML = "";
+        
+        // Se a tabela estiver vazia
+        if (bancoDeDados.produtos.length === 0) {
+            tabela.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-gray-400 italic">Nenhum produto cadastrado no momento.</td></tr>';
+        }
+
+        // Gerar linhas da tabela e opções do menu de seleção (Lista)
+        bancoDeDados.produtos.forEach(p => {
+            // Tabela HTML
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50 transition-colors";
+            tr.innerHTML = `
+                <td class="py-3 px-4 font-mono text-xs text-gray-400">#${p.id}</td>
+                <td class="py-3 px-4 font-semibold text-gray-700">${p.nome}</td>
+                <td class="py-3 px-4 text-gray-600">$${p.preco.toFixed(2)}</td>
+                <td class="py-3 px-4 text-center">
+                    <span class="px-2.5 py-1 rounded-full text-xs font-bold ${p.estoque > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">
+                        ${p.estoque} un
+                    </span>
+                </td>
+                <td class="py-3 px-4 text-right">
+                    <button onclick="excluirProduto(${p.id})" class="text-rose-500 hover:text-rose-700 font-medium text-xs border border-rose-200 hover:border-rose-400 px-2 py-1 rounded transition-all">
+                        Remover
+                    </button>
+                </td>
+            `;
+            tabela.appendChild(tr);
+
+            // Menu de Opções (Select)
+            const opt = document.createElement("option");
+            opt.value = p.id;
+            opt.textContent = `${p.nome} (Estoque: ${p.estoque})`;
+            seletor.appendChild(opt);
+        });
+
+        // Gerar o painel visual de Logs do Histórico
+        if (bancoDeDados.historico.length === 0) {
+            historicoContainer.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-4">Aguardando movimentações de estoque...</p>';
+        }
+
+        bancoDeDados.historico.forEach(log => {
+            const itemLog = document.createElement("div");
+            itemLog.className = "flex flex-col sm:flex-row sm:justify-between text-xs p-2 bg-gray-50 border rounded border-gray-100 hover:bg-gray-100 transition-all";
+            itemLog.innerHTML = `<span class="text-gray-700 font-medium">${log.descricao}</span> <span class="text-gray-400 font-mono text-[10px] mt-0.5 sm:mt-0">${log.horario}</span>`;
+            historicoContainer.appendChild(itemLog);
+        });
+    }// Executa a carga inicial renderizando dados salvos do histórico
+    window.onload = function() {
+        atualizarInterface();
+    };
+
+</script>
+</body>
+</html>
+
+
