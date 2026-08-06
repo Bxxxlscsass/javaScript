@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Avançado de Diagnóstico de Hardware</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Cabeçalho -->
+        <header class="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wide text-indigo-400"> Central Avançada de Diagnóstico</h1>
+                <p class="text-gray-400 text-sm mt-1">Análise experimental de hardware, estresse de CPU e verificação de periféricos</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="limparTerminal()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium px-4 py-2.5 rounded-xl text-xs border border-gray-700 transition-all">Limpar Logs</button>
+                <button onclick="executarDiagnosticoCompleto()" id="btnCompleto" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/20 text-xs"> Varredura Completa</button>
+            </div>
+        </header>
+
+        <!-- Informações Base do Hardware Real -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-900 p-4 rounded-2xl border border-gray-800" id="hardwareReal">
+            <!-- Inserido via JS -->
+        </section>
+
+        <!-- Grade Principal de Operações -->
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Coluna da Esquerda: Controles de Hardware Avançados (5 Colunas) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Painel 1: Módulos de Estresse Real & Rede -->
+                <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 shadow-sm space-y-4">
+                    <h2 class="text-xs font-bold text-indigo-400 uppercase tracking-widest border-b border-gray-800 pb-2"> Testes de Performance Real</h2>
+                    
+                    <!-- Estresse de CPU -->
+                    <div class="p-3 bg-gray-950 rounded-xl border border-gray-800 flex items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-200">Estresse Lógico de CPU</h3>
+                            <p class="text-[11px] text-gray-400 mt-0.5">Calcula números primos em loop para medir a potência de processamento do navegador.</p>
+                        </div>
+                        <button onclick="testarEstresseCPU()" class="bg-rose-950 hover:bg-rose-900 text-rose-300 px-3 py-2 rounded-lg text-xs font-bold border border-rose-800/50 transition-all whitespace-nowrap btn-teste">Estressar CPU</button>
+                    </div>
+
+                    <!-- Teste de Rede Real -->
+                    <div class="p-3 bg-gray-950 rounded-xl border border-gray-800 flex items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-200">Latência de Rede (Ping)</h3>
+                            <p class="text-[11px] text-gray-400 mt-0.5">Dispara requisições assíncronas assinaladas para medir o atraso de rede real.</p>
+                        </div>
+                        <button onclick="testarLatenciaRede()" class="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 px-3 py-2 rounded-lg text-xs font-bold border border-emerald-800/50 transition-all whitespace-nowrap btn-teste">Testar Ping</button>
+                    </div>
+                </div>
+
+                <!-- Painel 2: Periféricos Multimídia (Acesso Legítimo) -->
+                <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 shadow-sm space-y-4">
+                    <h2 class="text-xs font-bold text-indigo-400 uppercase tracking-widest border-b border-gray-800 pb-2"> Verificação de Periféricos</h2>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="verificarPeriferico('audio')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 p-3 rounded-xl text-xs font-medium border border-gray-700 transition-all flex flex-col items-center gap-2 btn-teste">
+                            <span> Testar Microfone</span>
+                        </button>
+                        <button onclick="verificarPeriferico('video')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 p-3 rounded-xl text-xs font-medium border border-gray-700 transition-all flex flex-col items-center gap-2 btn-teste">
+                            <span> Testar Câmera</span>
+                        </button>
+                    </div>
+
+                    <!-- Retorno Visual Oculto da Câmera para Validação Sem Quebrar o Layout -->
+                    <video id="previewVideo" autoplay playsinline class="hidden w-full h-32 bg-black rounded-lg border border-gray-800 object-cover"></video>
+                </div>
+            </div>
+
+            <!-- Coluna da Direita: Terminal Log e Console Estilizado (7 Colunas) -->
+            <div class="lg:col-span-7 bg-gray-900 rounded-2xl border border-gray-800 p-5 flex flex-col min-h-[420px]">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-3 mb-4">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider"> Log de Compilação e Resposta Lógica</h3>
+                    <span class="px-2 py-0.5 rounded bg-gray-800 font-mono text-[10px] text-gray-400">tty/syslog</span>
+                </div>
+                
+                <div id="terminal" class="bg-gray-950 p-4 rounded-xl font-mono text-xs text-emerald-400 overflow-y-auto flex-1 space-y-1.5 border border-gray-950 shadow-inner h-96">
+                    <p class="text-gray-600">// Subsistemas operacionais prontos. Aguardando gatilho de hardware...</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- CÓDIGO FONTE AVANÇADO JAVASCRIPT PURO -->
+    <script>
+        "use strict";
+
+        // ==========================================
+        // 1. CARGA DE ESPECIFICAÇÕES REAIS DO NAVEGADOR
+        // ==========================================
+        function carregarMetadados() {
+            const container = document.getElementById("hardwareReal");
+            const threads = navigator.hardwareConcurrency || "Não Identificado";
+            const memory = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "Não Compartilhada";
+            const userAgent = navigator.userAgent.toLowerCase();
+            
+            let sistemaOperacional = "Desconhecido";
+            if (userAgent.includes("win")) sistemaOperacional = "Windows NT";
+            else if (userAgent.includes("mac")) sistemaOperacional = "macOS Kernel";
+            else if (userAgent.includes("linux")) sistemaOperacional = "Linux Enterprise";
+            else if (userAgent.includes("android")) sistemaOperacional = "Android Linux";
+            else if (userAgent.includes("iphone") || userAgent.includes("ipad")) sistemaOperacional = "iOS Core";
+
+            container.innerHTML = `
+                <div class="p-3 bg-gray-950 rounded-xl border border-gray-800 text-center">
+                    <span class="block text-[10px] font-bold text-gray-500 uppercase">Processador Lógico</span>
+                    <span class="text-sm font-semibold text-indigo-400 mt-1 block">${threads} Cores / Threads</span>
+                </div>
+                <div class="p-3 bg-gray-950 rounded-xl border border-gray-800 text-center">
+                    <span class="block text-[10px] font-bold text-gray-500 uppercase">Arquitetura de RAM</span>
+                    <span class="text-sm font-semibold text-indigo-400 mt-1 block">Capacidade ≈ ${memory}</span>
+                </div>
+                <div class="p-3 bg-gray-950 rounded-xl border border-gray-800 text-center">
+                    <span class="block text-[10px] font-bold text-gray-500 uppercase">Plataforma do Kernel</span>
+                    <span class="text-sm font-semibold text-indigo-400 mt-1 block">${sistemaOperacional}</span>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // 2. SISTEMA DE SAÍDA E INTERFACE (TERMINAL)
+        // ==========================================
+        function logTerminal(mensagem, tipo = "info") {
+            const terminal = document.getElementById("terminal");
+            const p = document.createElement("p");
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+
+            let corTexto = "text-emerald-400";
+            if (tipo === "alerta") corTexto = "text-amber-400 font-semibold";
+            if (tipo === "erro") corTexto = "text-rose-500 font-bold";
+            if (tipo === "sucesso") corTexto = "text-indigo-400 font-semibold";
+
+            p.className = `${corTexto} leading-relaxed break-words`;
+            p.innerHTML = `<span class="text-gray-700 font-mono text-[10px] mr-2">[${timestamp}]</span> ${mensagem}`;
+            
+            terminal.appendChild(p);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function limparTerminal() {
+            document.getElementById("terminal").innerHTML = `<p class="text-gray-600">// Terminal limpo com sucesso.</p>`;
+        }
+
+        function bloquearControles(bloquear) {
+            const botoes = document.querySelectorAll(".btn-teste, #btnCompleto");
+            botoes.forEach(b => {
+                b.disabled = bloquear;
+                if (bloquear) b.classList.add("opacity-30", "cursor-not-allowed");
+                else b.classList.remove("opacity-30", "cursor-not-allowed");
+            });
+        }
+        // ==========================================
+        // 3. MÓDULO AVANÇADO 1: ESTRESSE DE CPU REAL
+        // ==========================================
+
+        function testarEstresseCPU() {
+            bloquearControles(true);
+            logTerminal(" [CPU STRESS] Inicializando engine de estresse matemático...", "alerta");
+            // Timeout para dar tempo de renderizar a mensagem acima antes do travamento controlado do loop
+            setTimeout(() => {
+                const tempoInicio = performance.now();
+                const limiteCalculo = 1500000; 
+                // Total de iterações lógicas estruturadas
+                let primosEncontrados = 0;
+                logTerminal(` [CPU STRESS] Executando cálculo do Crivo de Eratóstenes até ${limiteCalculo}...`);// Loop intencionalmente pesado para estressar a thread do navegador
+                for (let i = 2; i <= limiteCalculo; i++) {
+                    let ePrimo = true;
+                    const raiz = Math.sqrt(i);
+                    for (let j = 2; j <= raiz; j++) {
+                        if (i % j === 0) {
+                            ePrimo = false;
+                            break;
+                        }
+                    }
+                    if (ePrimo) primosEncontrados++;
+                }
+                const tempoFim = performance.now();
+                const duracaoMs = (tempoFim - tempoInicio).toFixed(2);
+                logTerminal(` [CPU STRESS] Estresse concluído! ${primosEncontrados} números primos isolados.`, "sucesso");
+                logTerminal(` [CPU STRESS] Tempo de resposta operacional: ${duracaoMs} ms`, "sucesso");
+                bloquearControles(false);
+            }, 100);
+        }
+        // ==========================================
+        // 4. MÓDULO AVANÇADO 2: LATÊNCIA DE REDE REAL (PING)
+        // =========================================
+        async function testarLatenciaRede() {
+            bloquearControles(true);
+            logTerminal(" [NETWORK] Disparando pacotes HTTP assinalados assíncronos...", "info");
+            // Usamos um endpoint público leve e estável de DNS/API para o teste de latência
+            const urlAlvo = "cloudflare-eth.com";
+            const amostras = 3;
+            let somaLatencia = 0;
+            let falhas = 0;
+            for (let i = 1; i <= amostras; i++) {
+                try {
+                    const inicio = performance.now();
+                    // cache: 'no-store' força a requisição a ir até o servidor real sem pegar cache local
+                    await fetch(`${urlAlvo}?t=${Math.random()}`, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' });
+                    const fim = performance.now();
+                    const latenciaIndividual = fim - inicio;
+                    somaLatencia += latenciaIndividual;
+                    logTerminal(` [NETWORK] Amostra #${i}: Resposta recebida em ${latenciaIndividual.toFixed(1)} ms`);
+                } catch (erro) {
+                    falhas++;
+                    logTerminal(` [NETWORK] Amostra #${i}: Falha de timeout ou barramento de rede.`, "erro");
+                }
+                // Pequena janela de tempo entre os pings
+                await new Promise(r => setTimeout(r, 400));
+            }
+            if (falhas === amostras) {
+                logTerminal(" [NETWORK] Erro crítico de rede: Todos os pacotes de teste estouraram o limite de tempo.", "erro");
+            } else {
+                const mediaFinal = somaLatencia / (amostras - falhas);
+                logTerminal(` [NETWORK] Teste concluído. Latência Média (Ping): ${mediaFinal.toFixed(1)} ms`, "sucesso");
+            }
+            bloquearControles(false);
+        }
+
+        // ==========================================
+        //  5. MÓDULO AVANÇADO 3: PERIFÉRICOS (MICROFONE E CÂMERA REAIS)
+        // ==========================================
+        async function verificarPeriferico(tipo) {
+            bloquearControles(true);
+            const constraints = {
+                audio: tipo === 'audio',
+                video: tipo === 'video'
+            };
+            logTerminal(`[MEDIA] Solicitando autorização de hardware para: ${tipo.toUpperCase()}...`, "alerta");
+            try {
+                // Abre o fluxo de hardware legítimo do usuário pedindo a permissão nativa
+                const fluxoMedia = await navigator.mediaDevices.getUserMedia(constraints);
+                logTerminal(` [MEDIA] Permissão concedida pelo cliente. Barramento do dispositivo aberto com sucesso.`, "sucesso");
+                if (tipo === 'video') {
+                    const videoElement = document.getElementById("previewVideo");
+                    videoElement.classList.remove("hidden");
+                    videoElement.srcObject = fluxoMedia;
+                    logTerminal(` [MEDIA] Fluxo de vídeo acoplado ao elemento de renderização gráfica.`, "info");
+                    // Aguarda 4 segundos com a câmera aberta e fecha para encerrar o diagnóstico
+                    await new Promise(r => setTimeout(r, 4000));
+                    videoElement.classList.add("hidden");
+                } else {
+                    logTerminal(` [MEDIA] Captura de áudio inicializada. Analisando canais de amostragem de entrada...`, "info");
+                    await new Promise(r => setTimeout(r, 3000));
+                }
+                // Desliga os hardwares (led da câmera/microfone) após a conclusão do teste
+                fluxoMedia.getTracks().forEach(track => track.stop());
+                logTerminal(` [MEDIA] Conexão com o dispositivo ${tipo.toUpperCase()} encerrada de forma segura.`, "info");
+            } catch (erro) {
+                if (erro.name === "NotAllowedError" || erro.name === "PermissionDeniedError") {
+                    logTerminal(` [MEDIA] Acesso negado: O usuário rejeitou a permissão do ${tipo}.`, "erro");
+                } else if (erro.name === "NotFoundError" || erro.name === "DevicesNotFoundError") {
+                    logTerminal(` [MEDIA] Falha física: Nenhum hardware de ${tipo} foi detectado na máquina.`, "erro");
+                } else {
+                    logTerminal(` [MEDIA] Erro inesperado: ${erro.message}`, "erro");
+                }
+            }
+            bloquearControles(false);
+            }
+
+            // ==========================================
+            //  6. ENGENHARIA DE DIAGNÓSTICO SEQUENCIAL COMPLETO
+            // ==========================================
+            async function executarDiagnosticoCompleto() {
+                bloquearControles(true);
+                limparTerminal();
+                logTerminal("==========================================================", "info");
+                logTerminal(" DISPARANDO ROTINA COMPLETA DE DIAGNÓSTICOS DO SISTEMA", "alerta");
+                logTerminal("==========================================================", "info");
+                await new Promise(r => setTimeout(r, 1000));
+                // Executa sequencialmente aguardando a finalização lógica de cada etapa para não colapsar a thread
+                await testarLatenciaRede();
+                await new Promise(r => setTimeout(r, 800));
+                await testarEstresseCPU();
+                await new Promise(r => setTimeout(r, 800));
+                logTerminal("==========================================================", "info");
+                logTerminal(" ROTINA DE ENGENHARIA CONCLUÍDA. REVISE OS LOGS ACIMA.", "sucesso");
+                logTerminal("==========================================================", "info");
+                bloquearControles(false);
+            }
+            window.onload = function() {
+                carregarMetadados();
+            };
+    </script>
+</body>
+</html>
+
+
+
