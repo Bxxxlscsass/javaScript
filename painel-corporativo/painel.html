@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Interativo Pro - Painel de Monitoramento</title>
+    <style>
+        /* Modern Minimalist Global CSS */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Container to keep screens stacked on top of each other during transition */
+        .wrapper {
+            position: relative;
+            width: 340px;
+            height: 560px; 
+            transition: width 0.4s ease;
+        }
+
+        /* When the dashboard is active, widen the wrapper container to fit the table layout neatly */
+        .wrapper.wide-mode {
+            width: 850px;
+        }
+
+        /* Clean Card Container Base Configuration */
+        .card {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
+            
+            /* ANIMATION BASE STATE */
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s ease;
+        }
+
+        /* ANIMATION CONTROL: Hidden State */
+        .card.hidden-page {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(15px);
+            pointer-events: none;
+        }
+
+        /* DASHBOARD TABLE CARD SCREEN CONFIGURATION */
+        #dashboard-screen {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(15px);
+            pointer-events: none;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+        }
+
+        #dashboard-screen .badge-header {
+            background-color: #1e293b;
+            color: #ffffff;
+            margin: -30px -30px 20px -30px;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #dashboard-screen.active-page {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        h2.title {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 22px;
+            text-align: center;
+        }
+
+        /* Interactive Menu Selection Links */
+        .menu-option {
+            cursor: pointer;
+            color: #3498db;
+            font-size: 16px;
+            margin: 12px 0;
+            padding: 10px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .menu-option:hover {
+            background-color: #eaf2f8;
+            color: #2980b9;
+            padding-left: 15px;
+        }
+
+        .menu-option.selected-menu {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Form Hidden by Default */
+        .form-container {
+            display: none;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #eceff1;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        .form-container h3 {
+            margin-top: 0;
+            color: #34495e;
+            font-size: 18px;
+        }
+
+        /* Standardized Form Input Groups */
+        .input-group {
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-bottom: 4px;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccd1d1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-color: #3498db;
+        }
+
+        /* CORPORATE TABLE STYLES */
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            padding: 12px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* 🌟 NEW: Live Monitoring Status Led Indicator */
+        .status-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-led {
+            width: 12px;
+            height: 12px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #2ecc71;
+            display: inline-block;
+            animation: pulse 1.5s infinite ease-in-out;
+            flex-shrink: 0;
+        }
+
+        /* 🌟 NEW: Led Radar Blinking Keyframes Animation */
+        @keyframes pulse {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.6;
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+                box-shadow: 0 0 12px 4px rgba(46, 204, 113, 0.4);
+            }
+            100% {
+                transform: scale(0.9);
+                opacity: 0.6;
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+            }
+        }
+
+        .badge-ru-text {
+            font-family: monospace;
+            background-color: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        /* 🌟 UPDATED: Premium Action Menu Buttons Configuration Layout */
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        button {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        button:active {
+            transform: scale(0.96); /* Interactive physical micro-press feedback */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-sair {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            flex: 1;
+        }
+
+        .btn-sair:hover {
+            background-color: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-enter {
+            background-color: #2ecc71;
+            color: white;
+            flex: 1.5; /* Gives slightly more emphasis prominence weight to enter action */
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2);
+        }
+
+        .btn-enter:hover {
+            background-color: #27ae60;
+            box-shadow: 0 4px 16px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-logout {
+            background-color: #64748b;
+            color: white;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .btn-logout:hover {
+            background-color: #475569;
+        }
+
+        .btn-row-delete {
+            background-color: #ef4444;
+            color: white;
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        .btn-row-delete:hover {
+            background-color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrapper" id="main-wrapper">
+
+        <!-- SCREEN 1: AUTHENTICATION (MENU + FORMS) -->
+        <div class="card" id="auth-screen">
+            <h2 class="title">Painel Corporativo:</h2>
+            
+            <div class="menu-option" id="opt-cadastro">1 - cadastrar funcionário</div>
+            <div class="menu-option" id="opt-login">2 - visualizar tabela de funcionários</div>
+            <div class="menu-option" id="opt-senha">3 - esqueci a senha</div>
+            
+            <!-- FORM 1: CADASTRO -->
+            <div id="form-cadastro" class="form-container">
+                <h3>Novo Funcionário</h3>
+                <div class="input-group">
+                    <label>Nome Completo:</label>
+                    <input type="text" id="cad-nome">
+                </div>
+                <div class="input-group">
+                    <label>Email Corporativo:</label>
+                    <input type="email" id="cad-email">
+                </div>
+                <div class="input-group">
+                    <label>Função / Cargo:</label>
+                    <select id="cad-funcao">
+                        <option value="">Selecione uma função</option>
+                        <option value="Programador">Programador</option>
+                        <option value="Analista de TI">Analista de TI</option>
+                        <option value="Suporte Técnico">Suporte Técnico</option>
+                        <option value="Desenvolvedor de Software">Desenvolvedor de Software</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Senha de Acesso:</label>
+                    <input type="password" id="cad-senha">
+                </div>
+            </div> <!-- Closes #form-cadastro -->
+
+            <!-- FORM 2: LOGIN -->
+            <div id="form-login" class="form-container">
+                <h3>Acessar Banco de Dados</h3>
+                <div class="input-group">
+                    <label>Email Cadastrado:</label>
+                    <input type="email" id="log-email">
+                </div>
+                <div class="input-group">
+                    <label>Senha:</label>
+                    <input type="password" id="log-senha">
+                </div>
+            </div> <!-- Closes #form-login -->
+
+            <!-- FORM 3: RECUPERAR SENHA -->
+            <div id="form-senha" class="form-container">
+                <h3>Recuperar Senha</h3>
+                <div class="input-group">
+                    <label>Digite seu Email cadastrado:</label>
+                    <input type="email" id="rec-email">
+                </div>
+            </div> <!-- Closes #form-senha -->
+
+            <div class="actions">
+                <button class="btn-sair">Sair</button>
+                <button class="btn-enter">Enter</button>
+            </div>
+        </div> <!-- Closes #auth-screen card -->
+
+        <!-- SCREEN 2: MONITORING TABLE MATRIX PANEL CONTAINER -->
+        <div class="card" id="dashboard-screen">
+            <div class="badge-header">Quadro Geral de Funcionários</div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status / Nome</th>
+                            <th>RU</th>
+                            <th>Email</th>
+                            <th>Função / Cargo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employee-table-body">
+                        <!-- Dynamic rows with blinking LEDs are added here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn-logout" id="btn-logout">Fechar Tabela</button>
+        </div> <!-- Closes #dashboard-screen card -->
+
+    </div> <!-- Closes #main-wrapper -->
+
+    <!-- Perfect Position: Opens the script safely after all HTML elements exist -->
+    <script>
+        // DOM Nodes Selection
+        const mainWrapper = document.getElementById('main-wrapper');
+        const authScreen = document.getElementById('auth-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const tableBody = document.getElementById('employee-table-body');
+        
+        const logoutButton = document.getElementById('btn-logout');
+        
+        const optCadastro = document.getElementById('opt-cadastro');
+        const optLogin = document.getElementById('opt-login');
+        const optSenha = document.getElementById('opt-senha');
+        
+        const formCadastro = document.getElementById('form-cadastro');
+        const formLogin = document.getElementById('form-login');
+        
+        const formSenha = document.getElementById('form-senha');
+        const sairButton = document.querySelector('.btn-sair');
+        const enterButton = document.querySelector('.btn-enter');
+        
+        let currentOption = '';
+        // 7 PRE-REGISTERED CORE EMPLOYEES DATA ARRAY
+        const initialEmployees = [
+            { nome: "Carlos Silva", email: "carlos@empresa.com", funcao: "Programador", ru: "105432", senha: "123" },
+            { nome: "Ana Souza", email: "ana@empresa.com", funcao: "Analista de TI", ru: "482910", senha: "123" },
+            { nome: "Bruno Lima", email: "bruno@empresa.com", funcao: "Suporte Técnico", ru: "310492", senha: "123" },
+            { nome: "Julia Costa", email: "julia@empresa.com", funcao: "Desenvolvedor de Software", ru: "721954", senha: "123" },
+            { nome: "Ricardo Alves", email: "ricardo@empresa.com", funcao: "Gerente de Projeto", ru: "849201", senha: "123" },
+            { nome: "Fernanda Ribeiro", email: "fernanda@empresa.com", funcao: "Programador", ru: "612543", senha: "123" },
+            { nome: "Marcos Rocha", email: "marcos@empresa.com", funcao: "Desenvolvedor de Software", ru: "295481", senha: "123" }
+        ];
+        // Seed LocalStorage if it's completely empty
+        function seedDatabase() {
+            initialEmployees.forEach(emp => {
+                if (!localStorage.getItem(emp.email)) {
+                    localStorage.setItem(emp.email, JSON.stringify(emp));
+                }
+            });
+        }
+        seedDatabase();
+        // RENDERING FUNCTION: Builds table rows dynamically with radar blink indicators
+        function renderEmployeeTable() {
+            tableBody.innerHTML = '';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                try {
+                    const employee = JSON.parse(localStorage.getItem(key));
+                    if (employee && employee.ru && employee.funcao) {
+                        const row = document.createElement('tr');
+                        // UPDATED: Replaced avatar image node with blinking CSS status LED dot
+                        row.innerHTML = `<td>  <div class="status-cell"> <span class="status-led"></span> <strong>${employee.nome}</strong> </div>  </td>  <td><span class="badge-ru-text">${employee.ru}</span></td>  <td>${employee.email}</td>  <td>${employee.funcao}</td>  <td>  <button class="btn-row-delete" onclick="deleteEmployee('${employee.email}')">Excluir</button>  </td>`;
+                        tableBody.appendChild(row);
+                    }
+                } catch(e) {
+                    // Ignore non-JSON keys
+                }
+            }
+        }
+
+        // Global row deletion controller
+        window.deleteEmployee = function(email) {
+            if (confirm("Deseja realmente remover este funcionário do sistema?")) {
+                localStorage.removeItem(email);
+                renderEmployeeTable();
+            }
+        };
+        function clearActiveMenuStyles() {
+            optCadastro.classList.remove('selected-menu');
+            optLogin.classList.remove('selected-menu');
+            optSenha.classList.remove('selected-menu');
+        }function hideAllForms() {
+            formCadastro.classList.remove('active');
+            formLogin.classList.remove('active');
+            formSenha.classList.remove('active');
+            
+            clearActiveMenuStyles();
+        }
+        function clearAllInputs() {
+            if (document.getElementById('cad-nome')) document.getElementById('cad-nome').value = '';
+            if (document.getElementById('cad-email')) document.getElementById('cad-email').value = '';
+            if (document.getElementById('cad-funcao')) document.getElementById('cad-funcao').value = '';
+            if (document.getElementById('cad-senha')) document.getElementById('cad-senha').value = '';
+            
+            document.getElementById('log-email').value = '';
+            document.getElementById('log-senha').value = '';
+            document.getElementById('rec-email').value = '';
+        }
+        // Menu Triggers
+        optCadastro.addEventListener('click', () => {
+            hideAllForms();formCadastro.classList.add('active');
+            optCadastro.classList.add('selected-menu');
+            currentOption = "cadastro";
+        });
+        
+        optLogin.addEventListener('click', () => {
+            hideAllForms();
+            formLogin.classList.add('active');
+            optLogin.classList.add('selected-menu');
+            currentOption = "login";
+        });
+        
+        optSenha.addEventListener('click', () => {
+            hideAllForms();
+            formSenha.classList.add('active');
+            optSenha.classList.add('selected-menu');
+            currentOption = "senha";
+        });
+        
+        // Main Submit Action
+        enterButton.addEventListener('click', () => {
+            if (currentOption === "cadastro") {
+                const nome = document.getElementById('cad-nome').value.trim();
+                const email = document.getElementById('cad-email').value.trim();
+                const funcao = document.getElementById('cad-funcao').value;
+                const senha = document.getElementById('cad-senha').value;
+                
+                if (!nome || !email || !funcao || !senha) {
+                    alert("Preencha todos os campos obrigatórios do cadastro!");
+                    return;
+                }
+                if (localStorage.getItem(email)) {
+                    alert("Este e-mail já está cadastrado!");
+                    return;
+                }
+                
+                const ruGerado = Math.floor(100000 + Math.random() * 900000);
+                
+                const userObj = {
+                    nome: nome,
+                    email: email,
+                    funcao: funcao,
+                    ru: ruGerado,
+                    senha: senha
+                };
+                
+                localStorage.setItem(email, JSON.stringify(userObj));
+                alert(`Funcionário cadastrado com sucesso! RU: ${ruGerado}`);
+                clearAllInputs();
+                hideAllForms();
+            
+            } else if (currentOption === "login") {
+                const email = document.getElementById('log-email').value.trim();
+                const senha = document.getElementById('log-senha').value;
+                const storedUser = localStorage.getItem(email);
+                
+                if (storedUser) {
+                    const parsedUser = JSON.parse(storedUser);
+                    if (parsedUser.senha === senha) {
+                        renderEmployeeTable();
+                        mainWrapper.classList.add('wide-mode');
+                        authScreen.classList.add('hidden-page');
+                        dashboardScreen.classList.add('active-page');
+                        clearAllInputs();
+                    } else {
+                        alert("Senha incorreta!");
+                    }
+                } else {
+                    alert("Funcionário não encontrado.");
+                }
+            } else if (currentOption === "senha") {
+                const email = document.getElementById('rec-email').value.trim();
+                const storedUser = localStorage.getItem(email);
+                if (storedUser) {
+                    const parsedUser = JSON.parse(storedUser);
+                    alert(`Sua senha é: ${parsedUser.senha}`);
+                } else {
+                    alert("Nenhum usuário encontrado com esse e-mail.");
+                }
+            } else {
+                alert("Por favor, selecione uma opção no menu primeiro!");
+            }
+        });
+        // Logout Action
+        logoutButton.addEventListener('click', () => {
+            dashboardScreen.classList.remove('active-page');
+            authScreen.classList.remove('hidden-page');
+            mainWrapper.classList.remove('wide-mode')
+            ;hideAllForms();currentOption = '';
+        });
+        
+        sairButton.addEventListener('click', () => {
+            hideAllForms();
+            clearAllInputs();
+            currentOption = '';
+            alert("Painel fechado.");
+        });
+</script>
+</body>
+</html>
