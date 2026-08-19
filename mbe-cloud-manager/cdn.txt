@@ -1,0 +1,3 @@
+https://tailwindcss.com link leitura
+
+cdn.tailwindcss.com link arquivo
