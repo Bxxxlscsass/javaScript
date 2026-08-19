@@ -1,0 +1,11 @@
+{
+  "name": "mbe-cloud-dashboard",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Painel de controle para instâncias AWS EC2",
+  "main": "server.js",
+  "dependencies": {
+    "@aws-sdk/client-ec2": "^3.0.0",
+    "express": "^4.19.0"
+  }
+}
