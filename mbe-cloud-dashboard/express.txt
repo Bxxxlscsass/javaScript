@@ -1,0 +1,6 @@
+#para rodar pela primeira ver fazer uma pasta para mbe-cloud-manager
+
+npm install
+
+node server.js
+
