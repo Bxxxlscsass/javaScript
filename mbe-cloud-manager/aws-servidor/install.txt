@@ -1,5 +1,0 @@
-node install
-node server.js 
-
-------------------
-prototype
