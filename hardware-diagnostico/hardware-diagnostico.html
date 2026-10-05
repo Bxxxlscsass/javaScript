@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Avançado de Diagnóstico de Hardware</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
+</style>
+
 </head>
 <body class="bg-gray-950 text-gray-100 font-sans min-h-screen p-4 md:p-8">
 
@@ -16,8 +19,8 @@
                 <p class="text-gray-400 text-sm mt-1">Análise experimental de hardware, estresse de CPU e verificação de periféricos</p>
             </div>
             <div class="flex gap-3">
-                <button onclick="limparTerminal()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium px-4 py-2.5 rounded-xl text-xs border border-gray-700 transition-all">Limpar Logs</button>
-                <button onclick="executarDiagnosticoCompleto()" id="btnCompleto" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/20 text-xs"> Varredura Completa</button>
+                <button onclick="limparTerminalComLeitura()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium px-4 py-2.5 rounded-xl text-xs border border-gray-700 transition-all">Limpar Logs</button>
+                <button onclick="executarDiagnosticoCompletoComLeitura()" id="btnCompleto" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/20 text-xs"> Varredura Completa</button>
             </div>
         </header>
 
@@ -42,7 +45,7 @@
                             <h3 class="text-sm font-semibold text-gray-200">Estresse Lógico de CPU</h3>
                             <p class="text-[11px] text-gray-400 mt-0.5">Calcula números primos em loop para medir a potência de processamento do navegador.</p>
                         </div>
-                        <button onclick="testarEstresseCPU()" class="bg-rose-950 hover:bg-rose-900 text-rose-300 px-3 py-2 rounded-lg text-xs font-bold border border-rose-800/50 transition-all whitespace-nowrap btn-teste">Estressar CPU</button>
+                        <button onclick="testarEstresseCPUComLeitura()" class="bg-rose-950 hover:bg-rose-900 text-rose-300 px-3 py-2 rounded-lg text-xs font-bold border border-rose-800/50 transition-all whitespace-nowrap btn-teste">Estressar CPU</button>
                     </div>
 
                     <!-- Teste de Rede Real -->
@@ -51,7 +54,7 @@
                             <h3 class="text-sm font-semibold text-gray-200">Latência de Rede (Ping)</h3>
                             <p class="text-[11px] text-gray-400 mt-0.5">Dispara requisições assíncronas assinaladas para medir o atraso de rede real.</p>
                         </div>
-                        <button onclick="testarLatenciaRede()" class="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 px-3 py-2 rounded-lg text-xs font-bold border border-emerald-800/50 transition-all whitespace-nowrap btn-teste">Testar Ping</button>
+                        <button onclick="testarLatenciaRedeComLeitura()" class="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 px-3 py-2 rounded-lg text-xs font-bold border border-emerald-800/50 transition-all whitespace-nowrap btn-teste">Testar Ping</button>
                     </div>
                 </div>
 
@@ -60,16 +63,16 @@
                     <h2 class="text-xs font-bold text-indigo-400 uppercase tracking-widest border-b border-gray-800 pb-2"> Verificação de Periféricos</h2>
                     
                     <div class="grid grid-cols-2 gap-3">
-                        <button onclick="verificarPeriferico('audio')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 p-3 rounded-xl text-xs font-medium border border-gray-700 transition-all flex flex-col items-center gap-2 btn-teste">
+                        <button onclick="verificarPerifericoComLeitura('audio')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 p-3 rounded-xl text-xs font-medium border border-gray-700 transition-all flex flex-col items-center gap-2 btn-teste">
                             <span> Testar Microfone</span>
                         </button>
-                        <button onclick="verificarPeriferico('video')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 p-3 rounded-xl text-xs font-medium border border-gray-700 transition-all flex flex-col items-center gap-2 btn-teste">
+                        <button onclick="verificarPerifericoComLeitura('video')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 p-3 rounded-xl text-xs font-medium border border-gray-700 transition-all flex flex-col items-center gap-2 btn-teste">
                             <span> Testar Câmera</span>
                         </button>
                     </div>
 
                     <!-- Retorno Visual Oculto da Câmera para Validação Sem Quebrar o Layout -->
-                    <video id="previewVideo" autoplay playsinline class="hidden w-full h-32 bg-black rounded-lg border border-gray-800 object-cover"></video>
+                    <video id="previewVideo" autoplay playsinline class="hidden w-full h-32 bg-black rounded-lg border border-gray-800 object-cover mt-2"></video>
                 </div>
             </div>
 
@@ -88,15 +91,89 @@
         </main>
     </div>
 
-    <!-- CÓDIGO FONTE AVANÇADO JAVASCRIPT PURO -->
-    <script>
+    <!-- SISTEMA DE DIAGNÓSTICOS CORE E INTEGRAÇÃO DE ACESSIBILIDADE POR CLIQUE -->
+   <script>
+
         "use strict";
+
+        // ==========================================
+        // CONFIGURAÇÕES E ESTADOS DE ÁUDIO GLOBAL
+        // ==========================================
+        let volumeConfig = 1.0;
+        let velocidadeConfig = 1.15;
+        let mutadoTemporariamente = false;
+        let falandoAgora = false;
+        let bloquearObserver = false; 
+        let reconhecimentoAtivo = false; // Controla o estado real do microfone de comandos
+        let recognitionInstance = null;  // Guarda a referência global do SpeechRecognition
+
+        // BIPE ACÚSTICO IMEDIATO (Web Audio API)
+        function dispararBipeEletronico() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(620, ctx.currentTime);
+                
+                gain.gain.setValueAtTime(volumeConfig * 0.25, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.12);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.12);
+            } catch (e) { console.warn("Falha no feedback acústico:", e); }
+        }
+
+        // MOTOR CENTRAL DE LEITURA TEXT-TO-SPEECH
+        function falarAcessibilidade(texto) {
+            if (!window.speechSynthesis || mutadoTemporariamente) return;
+            
+            falandoAgora = true;
+            window.speechSynthesis.cancel(); 
+
+            let textoLimpo = texto
+                .replace(/\/\/|\/\*/g, '')
+                .replace(/\[.*?\]/g, '')
+                .replace(/ms\b/gi, 'milissegundos')
+                .replace(/\bGB\b/gi, 'gigabytes')
+                .replace(/[^a-zA-Z0-9 áéíóúâêôçãõÀÉÍÓÚÂÊÔÇÃÕ]/g, ' ');
+
+            const utterance = new SpeechSynthesisUtterance(textoLimpo);
+            utterance.lang = 'pt-BR';
+            utterance.rate = velocidadeConfig;
+            utterance.volume = volumeConfig;
+            
+            utterance.onend = () => { falandoAgora = false; };
+            utterance.onerror = () => { falandoAgora = false; };
+            
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // CONTROLES DE MODULAÇÃO DE ÁUDIO
+        function pausarAudio() { if (window.speechSynthesis) window.speechSynthesis.pause(); }
+        function retomarAudio() { if (window.speechSynthesis) window.speechSynthesis.resume(); }
+        function silenciarAudio() { if (window.speechSynthesis) { window.speechSynthesis.cancel(); falandoAgora = false; falarAcessibilidade("Áudio interrompido."); } }
+
+        // CONTROLES DE NAVEGAÇÃO WEB REAL
+        function irParaGoogle() { falarAcessibilidade("Navegando para o Google."); setTimeout(() => window.location.href = "https://google.com", 1200); }
+        function voltarPagina() { falarAcessibilidade("Voltando página."); setTimeout(() => window.history.back(), 1200); }
+        function avancarPagina() { falarAcessibilidade("Avançando página."); setTimeout(() => window.history.forward(), 1200); }
+        function atualizarPagina() { falarAcessibilidade("Recarregando o painel."); setTimeout(() => window.location.reload(), 1200); }
+        function rolarParaBaixo() { dispararBipeEletronico(); window.scrollBy({ top: window.innerHeight * 0.7, behavior: 'smooth' }); }
+        function rolarParaCima() { dispararBipeEletronico(); window.scrollBy({ top: -window.innerHeight * 0.7, behavior: 'smooth' }); }
 
         // ==========================================
         // 1. CARGA DE ESPECIFICAÇÕES REAIS DO NAVEGADOR
         // ==========================================
         function carregarMetadados() {
             const container = document.getElementById("hardwareReal");
+            if (!container) return;
             const threads = navigator.hardwareConcurrency || "Não Identificado";
             const memory = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "Não Compartilhada";
             const userAgent = navigator.userAgent.toLowerCase();
@@ -105,8 +182,6 @@
             if (userAgent.includes("win")) sistemaOperacional = "Windows NT";
             else if (userAgent.includes("mac")) sistemaOperacional = "macOS Kernel";
             else if (userAgent.includes("linux")) sistemaOperacional = "Linux Enterprise";
-            else if (userAgent.includes("android")) sistemaOperacional = "Android Linux";
-            else if (userAgent.includes("iphone") || userAgent.includes("ipad")) sistemaOperacional = "iOS Core";
 
             container.innerHTML = `
                 <div class="p-3 bg-gray-950 rounded-xl border border-gray-800 text-center">
@@ -129,6 +204,7 @@
         // ==========================================
         function logTerminal(mensagem, tipo = "info") {
             const terminal = document.getElementById("terminal");
+            if (!terminal) return;
             const p = document.createElement("p");
             const timestamp = new Date().toLocaleTimeString('pt-BR');
 
@@ -144,7 +220,9 @@
             terminal.scrollTop = terminal.scrollHeight;
         }
 
-        function limparTerminal() {
+        function limparTerminalComLeitura() {
+            dispararBipeEletronico();
+            falarAcessibilidade("Limpar logs. Apagando console operacional.");
             document.getElementById("terminal").innerHTML = `<p class="text-gray-600">// Terminal limpo com sucesso.</p>`;
         }
 
@@ -156,53 +234,82 @@
                 else b.classList.remove("opacity-30", "cursor-not-allowed");
             });
         }
+
         // ==========================================
-        // 3. MÓDULO AVANÇADO 1: ESTRESSE DE CPU REAL
+        // 3. MÓDULO AVANÇADO 1: ESTRESSE DE CPU REAL (CADÊNCIA DE FALA AJUSTADA)
         // ==========================================
+        function testarEstresseCPUComLeitura() {
+            dispararBipeEletronico();
+            falarAcessibilidade("Iniciando teste de estresse do processador. Aguarde a computação.");
+            
+            // Dá uma janela de 1,5 segundo para o navegador ditar a frase acima inteira 
+            // antes de carregar o processamento pesado e travar a thread.
+            setTimeout(testarEstresseCPU, 1500);
+        }
 
         function testarEstresseCPU() {
             bloquearControles(true);
+            bloquearObserver = true; // Silencia o terminal para não encavalar leituras intermediárias
+            
             logTerminal(" [CPU STRESS] Inicializando engine de estresse matemático...", "alerta");
-            // Timeout para dar tempo de renderizar a mensagem acima antes do travamento controlado do loop
+            logTerminal(" [CPU STRESS] Executando cálculo intensivo de números primos...");
+
+            // Pequeno atraso visual para garantir a renderização das mensagens acima
             setTimeout(() => {
                 const tempoInicio = performance.now();
                 const limiteCalculo = 1500000; 
-                // Total de iterações lógicas estruturadas
                 let primosEncontrados = 0;
-                logTerminal(` [CPU STRESS] Executando cálculo do Crivo de Eratóstenes até ${limiteCalculo}...`);// Loop intencionalmente pesado para estressar a thread do navegador
+                
                 for (let i = 2; i <= limiteCalculo; i++) {
                     let ePrimo = true;
                     const raiz = Math.sqrt(i);
                     for (let j = 2; j <= raiz; j++) {
-                        if (i % j === 0) {
-                            ePrimo = false;
-                            break;
-                        }
+                        if (i % j === 0) { ePrimo = false; break; }
                     }
                     if (ePrimo) primosEncontrados++;
                 }
+                
                 const tempoFim = performance.now();
                 const duracaoMs = (tempoFim - tempoInicio).toFixed(2);
+                
                 logTerminal(` [CPU STRESS] Estresse concluído! ${primosEncontrados} números primos isolados.`, "sucesso");
                 logTerminal(` [CPU STRESS] Tempo de resposta operacional: ${duracaoMs} ms`, "sucesso");
-                bloquearControles(false);
-            }, 100);
+                
+                // Emite o áudio do resultado final com segurança
+                falarAcessibilidade(`Teste de estresse concluído com sucesso em ${Math.round(duracaoMs)} milissegundos.`);
+                
+                // Devolve o controle para o ecossistema normal de voz
+                setTimeout(() => {
+                    bloquearObserver = false;
+                    bloquearControles(false);
+                }, 500);
+            }, 50);
         }
+
+
         // ==========================================
-        // 4. MÓDULO AVANÇADO 2: LATÊNCIA DE REDE REAL (PING)
+        // 4. MÓDULO AVANÇADO 2: LATÊNCIA DE REDE REAL
         // =========================================
+        function testarLatenciaRedeComLeitura() {
+            dispararBipeEletronico();
+            falarAcessibilidade("Testando latência de rede.");
+            testarLatenciaRede();
+        }
+
         async function testarLatenciaRede() {
             bloquearControles(true);
+            bloquearObserver = true; 
+
             logTerminal(" [NETWORK] Disparando pacotes HTTP assinalados assíncronos...", "info");
-            // Usamos um endpoint público leve e estável de DNS/API para o teste de latência
-            const urlAlvo = "cloudflare-eth.com";
+            
+            const urlAlvo = "https://cloudflare-eth.com";
             const amostras = 3;
             let somaLatencia = 0;
             let falhas = 0;
+            
             for (let i = 1; i <= amostras; i++) {
                 try {
                     const inicio = performance.now();
-                    // cache: 'no-store' força a requisição a ir até o servidor real sem pegar cache local
                     await fetch(`${urlAlvo}?t=${Math.random()}`, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' });
                     const fim = performance.now();
                     const latenciaIndividual = fim - inicio;
@@ -212,85 +319,239 @@
                     falhas++;
                     logTerminal(` [NETWORK] Amostra #${i}: Falha de timeout ou barramento de rede.`, "erro");
                 }
-                // Pequena janela de tempo entre os pings
                 await new Promise(r => setTimeout(r, 400));
             }
+            
             if (falhas === amostras) {
                 logTerminal(" [NETWORK] Erro crítico de rede: Todos os pacotes de teste estouraram o limite de tempo.", "erro");
+                falarAcessibilidade("Erro crítico de rede. Todos os pacotes falharam.");
             } else {
                 const mediaFinal = somaLatencia / (amostras - falhas);
                 logTerminal(` [NETWORK] Teste concluído. Latência Média (Ping): ${mediaFinal.toFixed(1)} ms`, "sucesso");
+                falarAcessibilidade(`Teste de rede concluído. Latência média de ${mediaFinal.toFixed(0)} milissegundos.`);
+            }
+            bloquearObserver = false;
+            bloquearControles(false);
+        }
+
+        // ==========================================
+        // 5. MÓDULO AVANÇADO 3: PERIFÉRICOS REAIS
+        // ==========================================
+        function verificarPerifericoComLeitura(tipo) {
+            dispararBipeEletronico();
+            if (tipo === 'audio') falarAcessibilidade("Solicitando verificação e captura do microfone.");
+            if (tipo === 'video') falarAcessibilidade("Solicitando acesso óptico e captura de imagem da câmera.");
+            verificarPeriferico(tipo);
+        }
+
+        async function verificarPeriferico(tipo) {
+            bloquearControles(true);
+            const constraints = { audio: tipo === 'audio', video: tipo === 'video' };
+            logTerminal(`[MEDIA] Solicitando autorização de hardware para: ${tipo.toUpperCase()}...`, "alerta");
+            try {
+                const fluxoMedia = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                bloquearObserver = true;
+                logTerminal(` [MEDIA] Permissão concedida. Canal de ${tipo.toUpperCase()} respondendo perfeitamente.`, "sucesso");
+                falarAcessibilidade(`Permissão concedida. O dispositivo de ${tipo === 'audio' ? 'áudio' : 'vídeo'} está funcionando.`);
+                bloquearObserver = false;
+                
+                if (tipo === 'video') {
+                    const videoEl = document.getElementById("previewVideo");
+                    if (videoEl) {
+                        videoEl.classList.remove("hidden");
+                        videoEl.srcObject = fluxoMedia;
+                        setTimeout(() => {
+                            fluxoMedia.getTracks().forEach(track => track.stop());
+                            videoEl.classList.add("hidden");
+                            bloquearObserver = true;
+                            logTerminal(` [MEDIA] Preview óptico finalizado e canal encerrado.`, "info");
+                            bloquearObserver = false;
+                            bloquearControles(false);
+                        }, 4000);
+                        return;
+                    }
+                }
+                fluxoMedia.getTracks().forEach(track => track.stop());
+            } catch (erro) {
+                logTerminal(` [MEDIA] Falha de comunicação ou permissão negada para o dispositivo de ${tipo}.`, "erro");
+
             }
             bloquearControles(false);
         }
 
         // ==========================================
-        //  5. MÓDULO AVANÇADO 3: PERIFÉRICOS (MICROFONE E CÂMERA REAIS)
+        // VARREDURA COMPLETA (ENCADEAMENTO DE VOZ SEGURO)
         // ==========================================
-        async function verificarPeriferico(tipo) {
-            bloquearControles(true);
-            const constraints = {
-                audio: tipo === 'audio',
-                video: tipo === 'video'
-            };
-            logTerminal(`[MEDIA] Solicitando autorização de hardware para: ${tipo.toUpperCase()}...`, "alerta");
-            try {
-                // Abre o fluxo de hardware legítimo do usuário pedindo a permissão nativa
-                const fluxoMedia = await navigator.mediaDevices.getUserMedia(constraints);
-                logTerminal(` [MEDIA] Permissão concedida pelo cliente. Barramento do dispositivo aberto com sucesso.`, "sucesso");
-                if (tipo === 'video') {
-                    const videoElement = document.getElementById("previewVideo");
-                    videoElement.classList.remove("hidden");
-                    videoElement.srcObject = fluxoMedia;
-                    logTerminal(` [MEDIA] Fluxo de vídeo acoplado ao elemento de renderização gráfica.`, "info");
-                    // Aguarda 4 segundos com a câmera aberta e fecha para encerrar o diagnóstico
-                    await new Promise(r => setTimeout(r, 4000));
-                    videoElement.classList.add("hidden");
-                } else {
-                    logTerminal(` [MEDIA] Captura de áudio inicializada. Analisando canais de amostragem de entrada...`, "info");
-                    await new Promise(r => setTimeout(r, 3000));
-                }
-                // Desliga os hardwares (led da câmera/microfone) após a conclusão do teste
-                fluxoMedia.getTracks().forEach(track => track.stop());
-                logTerminal(` [MEDIA] Conexão com o dispositivo ${tipo.toUpperCase()} encerrada de forma segura.`, "info");
-            } catch (erro) {
-                if (erro.name === "NotAllowedError" || erro.name === "PermissionDeniedError") {
-                    logTerminal(` [MEDIA] Acesso negado: O usuário rejeitou a permissão do ${tipo}.`, "erro");
-                } else if (erro.name === "NotFoundError" || erro.name === "DevicesNotFoundError") {
-                    logTerminal(` [MEDIA] Falha física: Nenhum hardware de ${tipo} foi detectado na máquina.`, "erro");
-                } else {
-                    logTerminal(` [MEDIA] Erro inesperado: ${erro.message}`, "erro");
-                }
-            }
-            bloquearControles(false);
+        function executarDiagnosticoCompletoComLeitura() {
+            dispararBipeEletronico();
+            falarAcessibilidade("Executando varredura completa. Iniciando bateria sequencial de testes.");
+            
+            // Dá uma janela para ditar a introdução antes de rodar o primeiro teste (Rede)
+            setTimeout(executarDiagnosticoCompleto, 2000);
+        }
+
+        async function executarDiagnosticoCompleto() {
+            logTerminal("Varredura sistêmica completa acionada...", "info");
+            
+            // 1. Executa primeiro o teste de latência (Rede)
+            await testarLatenciaRede();
+            
+            // 2. Aguarda 3 segundos (tempo necessário para a voz ditar o resultado do Ping)
+            // antes de carregar o estresse de CPU que trava o navegador.
+            setTimeout(() => {
+                testarEstresseCPUComLeitura();
+            }, 3000);
+        }
+
+        // ==========================================
+        // 7. MÓDULO ADICIONAL: EXPORTAÇÃO DE LOGS (ACESSIBILIDADE)
+        // ==========================================
+        function exportarLogsParaTexto() {
+            dispararBipeEletronico();
+            falarAcessibilidade("Exportando histórico de logs para arquivo de texto.");
+            
+            const terminal = document.getElementById("terminal");
+            if (!terminal) {
+                logTerminal("Erro ao localizar barramento de logs para exportação.", "erro");
+                return;
             }
 
-            // ==========================================
-            //  6. ENGENHARIA DE DIAGNÓSTICO SEQUENCIAL COMPLETO
-            // ==========================================
-            async function executarDiagnosticoCompleto() {
-                bloquearControles(true);
-                limparTerminal();
-                logTerminal("==========================================================", "info");
-                logTerminal(" DISPARANDO ROTINA COMPLETA DE DIAGNÓSTICOS DO SISTEMA", "alerta");
-                logTerminal("==========================================================", "info");
-                await new Promise(r => setTimeout(r, 1000));
-                // Executa sequencialmente aguardando a finalização lógica de cada etapa para não colapsar a thread
-                await testarLatenciaRede();
-                await new Promise(r => setTimeout(r, 800));
-                await testarEstresseCPU();
-                await new Promise(r => setTimeout(r, 800));
-                logTerminal("==========================================================", "info");
-                logTerminal(" ROTINA DE ENGENHARIA CONCLUÍDA. REVISE OS LOGS ACIMA.", "sucesso");
-                logTerminal("==========================================================", "info");
-                bloquearControles(false);
+            // Captura o texto limpo de todas as linhas de log do terminal
+            const linhasLog = Array.from(terminal.querySelectorAll("p"))
+                                   .map(p => p.textContent.trim())
+                                   .join("\r\n");
+
+            if (!linhasLog || linhasLog.includes("// Terminal limpo com sucesso.")) {
+                falarAcessibilidade("O terminal está vazio. Nada para exportar.");
+                logTerminal("Exportação abortada: Nenhuma linha de log registrada.", "alerta");
+                return;
             }
-            window.onload = function() {
-                carregarMetadados();
+
+            try {
+                // Cria e dispara o download do arquivo de forma autônoma
+                const blob = new Blob([linhasLog], { type: "text/plain;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const elementoLink = document.createElement("a");
+                
+                elementoLink.href = url;
+                elementoLink.download = `diagnostico_hardware_${new Date().toISOString().slice(0,10)}.txt`;
+                document.body.appendChild(elementoLink);
+                elementoLink.click();
+                
+                // Limpeza de cache de memória do objeto
+                document.body.removeChild(elementoLink);
+                URL.revokeObjectURL(url);
+                
+                logTerminal("Histórico de compilação exportado com sucesso para arquivo local.", "sucesso");
+            } catch (e) {
+                logTerminal("Falha crítica ao tentar gerar arquivo em disco.", "erro");
+            }
+        }
+
+        // ==========================================
+        // 6. INICIALIZAÇÃO DA CAMADA DE FALA (RECONHECIMENTO)
+        // ==========================================
+        (function inicializarVoz() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return;
+
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.lang = 'pt-BR';
+            recognition.interimResults = false;
+            
+            // Guarda a referência da instância para controle de colisão de mídia
+            recognitionInstance = recognition; 
+
+            const statusIndicator = document.createElement("div");
+            statusIndicator.className = "fixed top-2 right-4 bg-gray-900 border border-gray-800 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 text-gray-400 z-50 shadow-md font-mono cursor-pointer hover:bg-gray-800 transition-all";
+            statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-yellow-500" id="micDot"></span> <span id="micText">Clique aqui para ligar a voz</span>`;
+            document.body.appendChild(statusIndicator);
+
+            // MUTATION OBSERVER DO TERMINAL (Lê logs assíncronos gerados na tela)
+            const terminal = document.getElementById("terminal");
+            if (terminal) {
+                const observer = new MutationObserver((mutations) => {
+                    if (bloquearObserver) return; // Ignora se a trava de repetição estiver ativa
+
+                    mutations.forEach((mutation) => {
+                        if (mutation.addedNodes.length > 0) {
+                            const ultimoNo = mutation.addedNodes[mutation.addedNodes.length - 1];
+                            if (ultimoNo && ultimoNo.textContent) falarAcessibilidade(ultimoNo.textContent);
+                        }
+                    });
+                });
+                observer.observe(terminal, { childList: true });
+            }
+
+            // Dicionário unificado com comandos de controle e utilitários
+            const comandos = {
+                // Comandos de Controle do Navegador Web
+                'abrir google': irParaGoogle, 'ir para o google': irParaGoogle,
+                'voltar': voltarPagina, 'voltar página': voltarPagina,
+                'avançar': avancarPagina, 'avançar página': avancarPagina,
+                'recarregar': atualizarPagina, 'atualizar': atualizarPagina,
+                'descer': rolarParaBaixo, 'rolar para baixo': rolarParaBaixo,
+                'subir': rolarParaCima, 'rolar para cima': rolarParaCima,
+
+                // Métodos de Controle do Fluxo de Voz
+                'ler hardware': () => { const c = document.getElementById("hardwareReal"); if(c) falarAcessibilidade(c.innerText); },
+                'pausar voz': pausarAudio, 'retomar voz': retomarAudio, 'silêncio': silenciarAudio,
+                
+                // Módulo de exportação acessível
+                'salvar relatório': exportarLogsParaTexto, 'exportar logs': exportarLogsParaTexto, 'baixar texto': exportarLogsParaTexto,
+                
+                // Mapeamentos para as funções core do Painel
+                'limpar': limparTerminalComLeitura, 'limpar logs': limparTerminalComLeitura, 'limpar terminal': limparTerminalComLeitura,
+                'varredura': executarDiagnosticoCompletoComLeitura, 'completo': executarDiagnosticoCompletoComLeitura,
+                'estressar cpu': testarEstresseCPUComLeitura, 'testar cpu': testarEstresseCPUComLeitura,
+                'testar ping': testarLatenciaRedeComLeitura, 'testar rede': testarLatenciaRedeComLeitura, 'ping': testarLatenciaRedeComLeitura,
+                'testar microfone': () => verificarPerifericoComLeitura('audio'), 'testar câmera': () => verificarPerifericoComLeitura('video')
             };
+
+            recognition.onresult = (event) => {
+                if (falandoAgora) return; // Muta a escuta se o som for apenas o eco da própria página falando
+
+                const resultado = event.results[event.results.length - 1].transcript.trim().toLowerCase();
+                console.log("Comando capturado por voz:", resultado);
+                
+                for (const comando in comandos) {
+                    if (resultado === comando || resultado.includes(comando)) {
+                        comandos[comando]();
+                        break;
+                    }
+                }
+            };
+
+            recognition.onstart = () => {
+                reconhecimentoAtivo = true;
+                document.getElementById("micDot").className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                document.getElementById("micText").innerText = "Ouvindo Comandos...";
+                document.getElementById("micText").className = "text-emerald-400 font-medium";
+            };
+
+            recognition.onend = () => {
+                // Mantém o loop contínuo de escuta ativo apenas se não houver um teste bloqueante rodando
+                if (document.getElementById("micText").innerText !== "Clique aqui para ligar a voz" && !document.getElementById("btnCompleto").disabled) {
+                    try { recognition.start(); } catch(e) {}
+                }
+            };
+
+            statusIndicator.addEventListener("click", () => {
+                try {
+                    recognition.start();
+                    falarAcessibilidade("Navegação ativa.");
+                } catch(e) {}
+            });
+        })();
+
+        // Inicializa vinculação de metadados ao carregar a árvore DOM
+        window.addEventListener("DOMContentLoaded", carregarMetadados);
     </script>
-</body>
+ </body>
 </html>
+
 
 
 
